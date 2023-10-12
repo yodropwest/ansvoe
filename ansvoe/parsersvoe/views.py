@@ -1,9 +1,7 @@
-import array
 import sqlite3
-
 import requests
 from django.http import HttpResponse
-from xml.dom.minidom import parse, parseString
+from xml.dom.minidom import parse
 
 
 def index(request):
