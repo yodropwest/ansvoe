@@ -85,20 +85,36 @@ def parser_xml(fileName):
                             if location.firstChild.nodeType == 3:
                                 street = location.firstChild.data
 
+        data_tuple = [(ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building, bathroom,
+                       balcony, build_year, description, property_type, rooms, house, street)]
+        query_execution(data_tuple, ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total,
+                        building, bathroom,
+                        balcony, build_year, description, property_type, rooms, house, street)
 
-def insert_db(ids, rooms):
+
+def query_execution(data_tuple, ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building,
+                    bathroom,
+                    balcony, build_year, description, property_type, rooms, house, street):
     try:
         sqlite_connection = sqlite3.connect('db.sqlite3')
         cursor = sqlite_connection.cursor()
         print("Подключен к SQLite")
 
-        sqlite_insert_query = """INSERT INTO parsersvoe_apartments(id_crm, rooms) VALUES (?,?);"""
-        data_tuple = [(ids, rooms)]
-        cursor.executemany(sqlite_insert_query, data_tuple)
-        sqlite_connection.commit()
-        print("Запись успешно вставлена в таблицу parsersvoe_apartments ", cursor.rowcount)
-        sqlite_connection.commit()
+        sqlite_select_query = """select * from parsersvoe_apartments WHERE id_crm = ? """
+        cursor.execute(sqlite_select_query, (ids,))
+        records = cursor.fetchone()
+        if records is None:
+            sqlite_insert_query = """INSERT INTO
+               parsersvoe_apartments(id_crm, price, area, area_living, area_kitchen, floor, floor_total, building, bathroom, balcony, build_year, description, property_type, rooms, house, street)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+            cursor.executemany(sqlite_insert_query, data_tuple)
+        else:
+            sqlite_update_query = """Update parsersvoe_apartments set price = ?, area = ?, area_living = ?, area_kitchen = ?, floor = ?, floor_total = ?, building = ?, bathroom = ?, balcony = ?, build_year = ?, description = ?, property_type = ?, rooms = ?, house = ?, street = ? where id_crm = ?"""
+            data = [(price_apart, area_total, area_living, area_kitchen, floor, floor_total, building, bathroom,
+                     balcony, build_year, description, property_type, rooms, house, street, ids)]
+            cursor.executemany(sqlite_update_query, data)
 
+        sqlite_connection.commit()
         cursor.close()
 
     except sqlite3.Error as error:
