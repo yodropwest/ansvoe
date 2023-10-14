@@ -25,9 +25,65 @@ def parser_xml(fileName):
     for node in elements:
         ids = node.getAttribute("internal-id")
         for child in node.childNodes:
-            if child.tagName == 'rooms':
-                rooms = child.firstChild.data
-        insert_db(ids, rooms)
+            if child.nodeType == 1:
+
+                if child.tagName == 'area':
+                    for area in child.childNodes:
+                        if area.tagName == 'value':
+                            area_total = area.firstChild.data
+
+                if child.tagName == 'price':
+                    for price in child.childNodes:
+                        if price.tagName == 'value':
+                            price_apart = price.firstChild.data
+
+                if child.tagName == 'living-space':
+                    for area in child.childNodes:
+                        if area.tagName == 'value':
+                            area_living = area.firstChild.data
+
+                if child.tagName == 'kitchen-space':
+                    for area in child.childNodes:
+                        if area.tagName == 'value':
+                            area_kitchen = area.firstChild.data
+
+                if child.tagName == 'floor':
+                    floor = child.firstChild.data
+
+                if child.tagName == 'floors-total':
+                    floor_total = child.firstChild.data
+
+                if child.tagName == 'building-type':
+                    building = child.firstChild.data
+
+                if child.tagName == 'bathroom-unit':
+                    bathroom = child.firstChild.data
+
+                if child.tagName == 'balcony':
+                    balcony = child.firstChild.data
+
+                if child.tagName == 'built-year':
+                    build_year = child.firstChild.data
+                else:
+                    build_year = 'null'
+
+                if child.tagName == 'description':
+                    description = child.firstChild.data
+
+                if child.tagName == 'property-type':
+                    property_type = child.firstChild.data
+
+                if child.tagName == 'rooms':
+                    rooms = child.firstChild.data
+
+                if child.tagName == 'location':
+                    for location in child.childNodes:
+                        if location.tagName == 'house':
+                            if location.firstChild.nodeType == 3:
+                                house = location.firstChild.data
+                        if location.tagName == 'street':
+                            if location.firstChild.nodeType == 3:
+                                street = location.firstChild.data
 
 
 def insert_db(ids, rooms):
