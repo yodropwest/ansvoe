@@ -20,7 +20,7 @@ def download_xml(url):
 def parser_xml(fileName):
     dom = parse(fileName)
     elements = dom.getElementsByTagName("offer")
-
+    ids_array = []
 
     for node in elements:
         ids = node.getAttribute("internal-id")
@@ -85,11 +85,13 @@ def parser_xml(fileName):
                             if location.firstChild.nodeType == 3:
                                 street = location.firstChild.data
 
+        ids_array.append(ids)
         data_tuple = [(ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building, bathroom,
                        balcony, build_year, description, property_type, rooms, house, street)]
         query_execution(data_tuple, ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total,
                         building, bathroom,
                         balcony, build_year, description, property_type, rooms, house, street)
+    remove_sqlite_offers(ids_array)
 
 
 def query_execution(data_tuple, ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building,
@@ -117,6 +119,38 @@ def query_execution(data_tuple, ids, price_apart, area_total, area_living, area_
         sqlite_connection.commit()
         cursor.close()
 
+    except sqlite3.Error as error:
+        print("Ошибка при работе с SQLite", error)
+
+    finally:
+        if sqlite_connection:
+            sqlite_connection.close()
+            print("Соединение с SQLite закрыто")
+
+
+def remove_sqlite_offers(ids_array):
+    try:
+        sqlite_connection = sqlite3.connect('db.sqlite3')
+        cursor = sqlite_connection.cursor()
+        print("Подключен к SQLite удаление")
+
+        sqlite_select_ids = """select id_crm from parsersvoe_apartments"""
+        cursor.execute(sqlite_select_ids)
+        record = cursor.fetchall()
+        new_list = []
+        for item in record:
+            new_list.append(''.join(list(item)))
+        remove_offer = list(set(new_list) ^ set(ids_array))
+        if remove_offer:
+            for item_id in remove_offer:
+                sqlite_update_query = """DELETE from parsersvoe_apartments where id_crm = ?"""
+                cursor.execute(sqlite_update_query, (item_id,))
+                print('Удление успешно')
+        else:
+            print('Нет лишнего')
+
+        sqlite_connection.commit()
+        cursor.close()
     except sqlite3.Error as error:
         print("Ошибка при работе с SQLite", error)
 
