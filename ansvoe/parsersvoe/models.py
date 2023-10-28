@@ -19,3 +19,8 @@ class Apartments(models.Model):
     rooms = models.CharField(max_length=2)
     house = models.CharField(max_length=4)
     street = models.CharField(max_length=255)
+
+
+class ApartmentsImage(models.Model):
+    id_crm = models.ForeignKey(Apartments, on_delete=models.CASCADE, max_length=10)
+    image = models.ImageField(upload_to="uploads/")
