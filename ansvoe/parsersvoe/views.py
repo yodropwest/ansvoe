@@ -84,6 +84,11 @@ def parser_xml(fileName):
                         if location.tagName == 'street':
                             if location.firstChild.nodeType == 3:
                                 street = location.firstChild.data
+                if child.tagName == 'main-image':
+                    imageMain = child.firstChild.data
+                if child.tagName == 'image':
+                    image = child.firstChild.data
+                    download_images_and_insert(ids, image)
 
         ids_array.append(ids)
         data_tuple = [(ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building, bathroom,
@@ -92,6 +97,44 @@ def parser_xml(fileName):
                         building, bathroom,
                         balcony, build_year, description, property_type, rooms, house, street)
     remove_sqlite_offers(ids_array)
+
+
+def download_images_and_insert(ids, images):
+    url = images
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        file_name = url[url.rfind('/') + 1:]
+        with open("uploads/" + file_name + '.jpg', "wb") as file:
+            file.write(response.content)
+            print('Картинка успешно скачена')
+            data_tuple_image = [(ids, "uploads/" + file_name + '.jpg')]
+            insert_images(data_tuple_image, ids)
+    else:
+        print('Ошибка: картинка не скачалась')
+
+
+def insert_images(data_tuple_image, ids):
+    try:
+        sqlite_connection = sqlite3.connect('db.sqlite3')
+        cursor = sqlite_connection.cursor()
+        print("Подключен к SQLite image")
+
+        sqlite_insert_query = """INSERT INTO
+                       parsersvoe_apartmentsimage(id_crm_id, image)
+                       VALUES (?,?)"""
+        cursor.executemany(sqlite_insert_query, data_tuple_image)
+        print('Успешно добавили картинку')
+        sqlite_connection.commit()
+        cursor.close()
+
+    except sqlite3.Error as error:
+        print("Ошибка при работе с SQLite", error)
+
+    finally:
+        if sqlite_connection:
+            sqlite_connection.close()
+            print("Соединение с SQLite закрыто")
 
 
 def query_execution(data_tuple, ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building,
@@ -145,7 +188,7 @@ def remove_sqlite_offers(ids_array):
             for item_id in remove_offer:
                 sqlite_update_query = """DELETE from parsersvoe_apartments where id_crm = ?"""
                 cursor.execute(sqlite_update_query, (item_id,))
-                print('Удление успешно')
+                print('Удаление успешно')
         else:
             print('Нет лишнего')
 
