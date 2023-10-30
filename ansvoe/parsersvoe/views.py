@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import requests
 from django.http import HttpResponse
@@ -88,7 +89,7 @@ def parser_xml(fileName):
                     imageMain = child.firstChild.data
                 if child.tagName == 'image':
                     image = child.firstChild.data
-                    download_images_and_insert(ids, image)
+                    download_images(ids, image)
 
         ids_array.append(ids)
         data_tuple = [(ids, price_apart, area_total, area_living, area_kitchen, floor, floor_total, building, bathroom,
@@ -99,22 +100,25 @@ def parser_xml(fileName):
     remove_sqlite_offers(ids_array)
 
 
-def download_images_and_insert(ids, images):
+def download_images(ids, images):
     url = images
     response = requests.get(url)
-
     if response.status_code == 200:
         file_name = url[url.rfind('/') + 1:]
-        with open("uploads/" + file_name + '.jpg', "wb") as file:
-            file.write(response.content)
-            print('Картинка успешно скачена')
-            data_tuple_image = [(ids, "uploads/" + file_name + '.jpg')]
-            insert_images(data_tuple_image, ids)
+        if os.path.exists("uploads/" + file_name + '.jpg'):
+            print('Существует')
+        else:
+            with open("uploads/" + file_name + '.jpg', "wb") as file:
+                file.write(response.content)
+                print('Картинка успешно скачена')
+                image_url = "uploads/" + file_name + '.jpg'
+                data_tuple_image = [(ids, "uploads/" + file_name + '.jpg')]
+                insert_images(data_tuple_image, ids, image_url)
     else:
         print('Ошибка: картинка не скачалась')
 
 
-def insert_images(data_tuple_image, ids):
+def insert_images(data_tuple_image, ids, image_url):
     try:
         sqlite_connection = sqlite3.connect('db.sqlite3')
         cursor = sqlite_connection.cursor()
